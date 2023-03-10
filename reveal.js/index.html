@@ -78,8 +78,8 @@ void foo() {
 			<section>
 				<h2>Module Interface Unit</h2>
 				<pre><code class="language-cpp">/// @file bar.cpp
-// Module interface unit declaration must be first declaration
-// of the module unit (see exception in later slide)
+// MIU declaration must be the first declaration of the
+// module unit (see exception in later slide)
 export module bar;
 
 import &lt;string_view&gt;;  // Header unit import declaration
@@ -91,7 +91,7 @@ export {
 export namespace corpuls {
 	std::string_view bar();
 }</code></pre>
-				<p>Exactly one MIU per named module. Modules can export declarations <b>as well as definitions</b> (e.g., inline).</p>
+				<p>Exactly one MIU per named module. Modules can export declarations <b>as well as definitions</b> (e.g., inline functions).</p>
 			</section>
 
 			<section>
