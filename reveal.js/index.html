@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+	<title>reveal.js</title>
+
+	<link rel="stylesheet" href="dist/reset.css">
+	<link rel="stylesheet" href="dist/reveal.css">
+	<link rel="stylesheet" href="dist/theme/black.css">
+
+	<!-- Theme used for syntax highlighted code -->
+	<link rel="stylesheet" href="plugin/highlight/monokai.css">
+</head>
+
+<body>
+	<div class="reveal">
+		<div class="slides">
+			<section>
+				<h1>C++20 Modules</h1>
+				<h2>The current status of practical usability</h2>
+			</section>
+			<section>
+				<h1>Major compiler support</h1>
+				<p>Including dependency scanning.</p>
+				<p>
+				<table>
+					<thead>
+						<th>Vendor</th>
+						<th>Version</th>
+					</thead>
+					<tbody>
+						<tr>
+							<th>Microsoft</th>
+							<th>VS 2022</th>
+						</tr>
+						<tr>
+							<th>GNU</th>
+							<th>13.0 (Apr/May 2023)</th>
+						</tr>
+						<tr>
+							<th>LLVM/clang</th>
+							<th>16.0 (March 2023)</th>
+						</tr>
+					</tbody>
+				</table>
+				</p>
+			</section>
+
+			<section>
+				<h2>Translation Unit <small>(C++&lt;20)</small></h2>
+				<pre><code class="language-cpp">/// @file foo.cpp
+#include "foo.hpp"
+#include "bar.hpp"
+#include &lt;iostream&gt;
+
+void foo() {
+	std::cout &lt;&lt; bar() &lt;&lt; std::endl;
+}</code></pre>
+				<p>This translation unit is effectively approx. 2 MB in size.</p>
+			</section>
+
+			<section>
+				<h2>Translation Unit <small>(C++20)</small></h2>
+				<pre><code class="language-cpp">/// @file foo.cpp
+#include "foo.hpp"
+
+import bar; // Module import declaration
+import &lt;iostream&gt;; // Header unit import declaration
+
+void foo() {
+	std::cout &lt;&lt; bar() &lt;&lt; std::endl;
+}</code></pre>
+			</section>
+
+			<section>
+				<h2>Module Interface Unit</h2>
+				<pre><code class="language-cpp">/// @file bar.cpp
+// Module interface unit declaration must be first declaration
+// of the module unit (see exception in later slide)
+export module bar;
+
+import &lt;string_view&gt;;  // Header unit import declaration
+
+export std::string_view bar(); // or
+export {
+	std::string_view bar();
+} // or
+export namespace corpuls {
+	std::string_view bar();
+}</code></pre>
+				<p>Exactly one MIU per named module. Modules can export declarations <b>as well as definitions</b> (e.g., inline).</p>
+			</section>
+
+			<section>
+				<h2>Module Implementation Unit</h2>
+				<pre><code class="language-cpp">/// @file bar2.cpp
+// Module declaration must be first declaration of the
+// module unit (see exception in later slide)
+module bar;
+
+import &lt;string_view&gt;;  // Header unit import declaration
+
+std::string_view bar() {
+	return "Hello world!";
+}</code></pre>
+				<p>Belongs to a named module, but may not export anything.</p>
+			</section>
+
+			<section>
+				<h2>Module Names</h2>
+				<p>The module name consists of one or more identifiers separated by dots.</p>
+				<p>Examples:
+				<ul>
+					<li><pre>mymodule</pre></li>
+					<li><pre>corpuls.mymodule</pre></li>
+					<li><pre>corpuls.support.mymodule2</pre></li>
+				</ul></p>
+				<p>Dots have no intrinsic meaning, however they are used informally to represent hierarchy.</p>
+			</section>
+
+			<section>
+				<h2>Global Module Fragment</h2>
+				<pre><code class="language-cpp">/// @file my_module_unit.cpp
+// Global module fragment declaration must be first
+// declaration of the module unit, really!
+module;
+
+#define _SOME_MACRO 1 // Impacts some_header.hpp only but not
+                      // some_other_header.hpp
+#include "some_header.hpp" // Only allowed in the 
+                           // Global module fragment
+
+module some_module; // Module declaration
+
+import "some_other_header.hpp";
+...</code></pre>
+				<p><small>#include should not be used in a module unit (outside the global module fragment), because all included declarations and definitions would be considered part of the module.</small></p>
+			</section>
+
+			<section>
+				<h1>C++ Modules (3)</h1>
+				<p>Module Partition Unit</p>
+			</section>
+
+			<section>
+				<h1>C++ Modules (4)</h1>
+				<p>Private Module Fragments</p>
+			</section>
+
+			<section>
+				<h1>C++ Modules (5)</h1>
+				<p>Header Units</p>
+				<p><small>(Not supported by CMake yet).</small></p>
+			</section>
+
+			<section>
+				<h1>C++ Modules (6)</h1>
+				<p><img src="img/modules.svg"></p>
+			</section>
+
+			<section>
+				<h1>C++23 Standard Library Modules</h1>
+				<pre><code class="language-cpp">// module_unit.cpp
+import std; // Standard library module import
+
+void foo() {
+	std::cout &lt;&lt; "Hello world!\n";
+}</code></pre>
+			</section>
+			<section>
+				<p>Generate dependency file with gcc:</p>
+				<pre><code>
+$ c++ --std=c++20 -MD -MF main.cpp.o.ddi.d -E -x c++ main.cpp \
+-MT main.cpp.o.ddi -fmodules-ts -fdep-file=main.cpp.o.ddi \
+-fdep-output=main.cpp.o -fdep-format=p1689r5 main.cpp.o.ddi.i
+				</code></pre>
+			</section>
+			<section>
+				<img src="img/per_target_scanning.png">
+			</section>
+			<section>
+				<h1>C++ Modules Migration Notes</h1>
+				<p>Usage of static definitions.</p>
+			</section>
+		</div>
+	</div>
+
+	<script src="dist/reveal.js"></script>
+	<script src="plugin/notes/notes.js"></script>
+	<script src="plugin/markdown/markdown.js"></script>
+	<script src="plugin/highlight/highlight.js"></script>
+	<script>
+		// More info about initialization & config:
+		// - https://revealjs.com/initialization/
+		// - https://revealjs.com/config/
+		Reveal.initialize({
+			hash: true,
+
+			// Learn about plugins: https://revealjs.com/plugins/
+			plugins: [RevealMarkdown, RevealHighlight, RevealNotes]
+		});
+	</script>
+</body>
+
+</html>

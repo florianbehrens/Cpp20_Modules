@@ -1,0 +1,44 @@
+@startuml
+skinparam monochrome reverse
+skinparam BackgroundColor #e6e6e6
+
+class "Module" as Mod
+
+class "Translation Unit" as TU {
+  Contains class, function, 
+  variable definitions
+  ..
+  Can import modules
+}
+
+class "Module Unit" as MU {
+  Contains module
+  declaration
+}
+
+class "Module Implementation Unit" as MImplU {
+}
+
+class "(Primary) Module Interface Unit" as MIU {
+  Can export
+}
+
+class "Module Partition" as MP {
+  Can be imported within
+  the same module
+}
+
+class "Module Interface Partition" as MIP {
+  Can declare re-exportable
+  symbols
+}
+
+TU <|-- MU
+MU <|-- MImplU
+MU <|-- MIU
+MImplU <|-- MP
+MP <|-- MIP
+
+Mod "1" *-- "n" MImplU
+Mod "1" *-- "1" MIU
+@enduml
