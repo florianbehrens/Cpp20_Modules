@@ -20,8 +20,10 @@
 		<div class="slides">
 			<section>
 				<h1>C++20 Modules</h1>
-				<h2>The current status of practical usability</h2>
+				<p>or: RIP <code>#include</code></p>
+				<p>The current state of implementation.</p>
 			</section>
+
 			<section>
 				<h1>Major compiler support</h1>
 				<p>Including dependency scanning.</p>
@@ -50,6 +52,15 @@
 			</section>
 
 			<section>
+				<h2>General Usage Requirements</h2>
+				<p><ul>
+					<li>Patched GCC 13</li>
+					<li>Ninja 1.10 (dynamic dependency support)</li>
+					<li>CMake 3.25</li>
+					<li>Activation of experimental APIs in CMake</li>
+				</ul></p>
+			</section>
+			<section>
 				<h2>Translation Unit <small>(C++&lt;20)</small></h2>
 				<pre><code class="language-cpp">/// @file foo.cpp
 #include "foo.hpp"
@@ -59,7 +70,7 @@
 void foo() {
 	std::cout &lt;&lt; bar() &lt;&lt; std::endl;
 }</code></pre>
-				<p>This translation unit is effectively approx. 2 MB in size.</p>
+				<p>This translation unit is effectively approx. 2 MB (clang) in size.</p>
 			</section>
 
 			<section>
@@ -110,15 +121,28 @@ std::string_view bar() {
 			</section>
 
 			<section>
-				<h2>Module Names</h2>
-				<p>The module name consists of one or more identifiers separated by dots.</p>
-				<p>Examples:
-				<ul>
-					<li><pre>mymodule</pre></li>
-					<li><pre>corpuls.mymodule</pre></li>
-					<li><pre>corpuls.support.mymodule2</pre></li>
-				</ul></p>
-				<p>Dots have no intrinsic meaning, however they are used informally to represent hierarchy.</p>
+				<h2>Module Partition Unit</h1>
+					<pre><code class="language-cpp">/// @file baz.cpp
+export module mymodule:mypartition;
+
+import &lt;iostream&gt;;
+
+export void baz()
+{
+	std::cout << "Module partition\n";
+}</code></pre>
+			</section>
+
+			<section>
+				<h2>Module Partition Unit Usage</h1>
+					<pre><code class="language-cpp">/// @file mymodule.cpp
+export module mymodule;
+
+import :mypartition; // just import and use partition
+// or
+export import :mypartition; // import and re-export partition
+
+...</code></pre>
 			</section>
 
 			<section>
@@ -141,19 +165,33 @@ import "some_other_header.hpp";
 			</section>
 
 			<section>
-				<h1>C++ Modules (3)</h1>
-				<p>Module Partition Unit</p>
+				<h2>Module Names</h2>
+				<p>The module name consists of one or more identifiers separated by dots.</p>
+				<p>Examples:
+				<ul>
+					<li><pre>mymodule</pre></li>
+					<li><pre>corpuls.mymodule</pre></li>
+					<li><pre>corpuls.support.mymodule2</pre></li>
+				</ul></p>
+				<p>Dots have no intrinsic meaning, however they are used informally to represent hierarchy.</p>
 			</section>
 
 			<section>
-				<h1>C++ Modules (4)</h1>
-				<p>Private Module Fragments</p>
+				<h2>Private Module Fragment</h2>
+				<pre><code class="language-cpp">module : private;</code></pre>
+				<p>Separates module interface from implementation in single-file modules. Prevents from recompilation after change of implementation.</p>
+				<p>Not supported by GCC, yet.</p>
 			</section>
 
 			<section>
-				<h1>C++ Modules (5)</h1>
-				<p>Header Units</p>
-				<p><small>(Not supported by CMake yet).</small></p>
+				<h2>Header Units</h2>
+				<pre><code class="language-cpp">import "header.hpp";
+import &lt;iostream&gt;;</code></pre>
+				<p>GCC requires compiler transformation of header, which is not (and possibly never will be) supported by CMake:</p>
+				<p><small><code>
+					g++ -std=c++20 -fmodules-ts -xc++-header header.hpp<br>
+					g++ -std=c++20 -fmodules-ts -xc++-system-header iostream
+				</code></small></p>
 			</section>
 
 			<section>
@@ -170,6 +208,27 @@ void foo() {
 	std::cout &lt;&lt; "Hello world!\n";
 }</code></pre>
 			</section>
+
+			<section>
+				<h2>Building C++ Modules</h2>
+				<img src="img/modules-build-flow.png">
+			</section>
+
+			<section>
+				<h2>CMake Build Process Artifacts</h2>
+				<p><ul>
+					<li><code>.ddi</code>: Module dependency information (JSON, specified in <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p1689r5.html">p1689r5</a>)</li>
+					<li><code>.dd</code>: Aggregated dynamic dependency information (Ninja dyndep file created by CMake)</li>
+					<li><code>.gcm</code>: GCC's Compiled Module Interface (CMI - binary)</li>
+					<li><code>.modmap</code>: Find CMI file by module name (text)</li>
+				</ul></p>
+			</section>
+
+			<section>
+				<h2>CMake and C++ Modules</h2>
+				<p>target_sources and FILE_SETS.</p>
+			</section>
+
 			<section>
 				<p>Generate dependency file with gcc:</p>
 				<pre><code>
@@ -185,6 +244,18 @@ $ c++ --std=c++20 -MD -MF main.cpp.o.ddi.d -E -x c++ main.cpp \
 				<h1>C++ Modules Migration Notes</h1>
 				<p>Usage of static definitions.</p>
 			</section>
+
+			<section>
+				<p>More resources:					
+					<ul>
+						<li><a href="https://itnext.io/c-20-modules-complete-guide-ae741ddbae3d">C++ modules introduction</a></li>
+						<li><a href="https://gcc.gnu.org/onlinedocs/gcc/gcc-command-options/c++-modules.html">GCC 13 C++ modules documentation</a></li>
+						<li><a href="https://www.kitware.com/import-cmake-c20-modules/">CMake and C++ Modules</a></li>
+					</ul>
+				</p>
+			</section>
+
+
 		</div>
 	</div>
 
