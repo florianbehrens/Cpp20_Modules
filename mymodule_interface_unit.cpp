@@ -1,11 +1,10 @@
-//module;
+module;
 
-//#include <iostream>
+#include <iostream>
 
 export module mymodule;
 export import :ipartition;
 import :partition;
-import <iostream>;
 
 export {
 

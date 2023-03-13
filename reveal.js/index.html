@@ -25,42 +25,6 @@
 			</section>
 
 			<section>
-				<h1>Major compiler support</h1>
-				<p>Including dependency scanning.</p>
-				<p>
-				<table>
-					<thead>
-						<th>Vendor</th>
-						<th>Version</th>
-					</thead>
-					<tbody>
-						<tr>
-							<th>Microsoft</th>
-							<th>VS 2022</th>
-						</tr>
-						<tr>
-							<th>GNU</th>
-							<th>13.0 (Apr/May 2023)</th>
-						</tr>
-						<tr>
-							<th>LLVM/clang</th>
-							<th>16.0 (March 2023)</th>
-						</tr>
-					</tbody>
-				</table>
-				</p>
-			</section>
-
-			<section>
-				<h2>General Usage Requirements</h2>
-				<p><ul>
-					<li>Patched GCC 13</li>
-					<li>Ninja 1.10 (dynamic dependency support)</li>
-					<li>CMake 3.25</li>
-					<li>Activation of experimental APIs in CMake</li>
-				</ul></p>
-			</section>
-			<section>
 				<h2>Translation Unit <small>(C++&lt;20)</small></h2>
 				<pre><code class="language-cpp">/// @file foo.cpp
 #include "foo.hpp"
@@ -122,8 +86,8 @@ std::string_view bar() {
 
 			<section>
 				<h2>Module Partition Unit</h1>
-					<pre><code class="language-cpp">/// @file baz.cpp
-export module mymodule:mypartition;
+					<pre><code class="language-cpp">/// @file mypartition.cpp
+export module bar:mypartition;
 
 import &lt;iostream&gt;;
 
@@ -131,12 +95,13 @@ export void baz()
 {
 	std::cout << "Module partition\n";
 }</code></pre>
+				<p>Again, there are exactly one Module Partition Interface Unit and zero or more Module Partition Implementation Units.</p>
 			</section>
 
 			<section>
 				<h2>Module Partition Unit Usage</h1>
-					<pre><code class="language-cpp">/// @file mymodule.cpp
-export module mymodule;
+					<pre><code class="language-cpp">/// @file bar.cpp
+export module bar;
 
 import :mypartition; // just import and use partition
 // or
@@ -194,10 +159,10 @@ import &lt;iostream&gt;;</code></pre>
 				</code></small></p>
 			</section>
 
-			<section>
+<!--			<section>
 				<h1>C++ Modules (6)</h1>
 				<p><img src="img/modules.svg"></p>
-			</section>
+			</section>-->
 
 			<section>
 				<h1>C++23 Standard Library Modules</h1>
@@ -218,7 +183,7 @@ void foo() {
 				<h2>CMake Build Process Artifacts</h2>
 				<p><ul>
 					<li><code>.ddi</code>: Module dependency information (JSON, specified in <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p1689r5.html">p1689r5</a>)</li>
-					<li><code>.dd</code>: Aggregated dynamic dependency information (Ninja dyndep file created by CMake)</li>
+					<li><code>.dd</code>: Aggregated dynamic dependency information (<a href="https://ninja-build.org/manual.html#ref_dyndep">Ninja dyndep</a> file created by CMake)</li>
 					<li><code>.gcm</code>: GCC's Compiled Module Interface (CMI - binary)</li>
 					<li><code>.modmap</code>: Find CMI file by module name (text)</li>
 				</ul></p>
@@ -226,23 +191,57 @@ void foo() {
 
 			<section>
 				<h2>CMake and C++ Modules</h2>
-				<p>target_sources and FILE_SETS.</p>
+				<pre><code class="language-cmake">add_executable(c++20_modules)
+
+target_sources(  # Since CMake 3.1
+	c++20_modules
+	PRIVATE
+		translation_unit.cpp
+		module_unit.cpp
+	PRIVATE FILE_SET CXX_MODULES FILES  # Since CMake 3.23
+		module_interface_unit.cpp
+		module_interface_partition.cpp
+		module_partition.cpp
+)</code></pre>				
+				<p>All files with symbols to be used from other object files must be tagged (not only exporting files)!</p>
 			</section>
 
 			<section>
-				<p>Generate dependency file with gcc:</p>
-				<pre><code>
-$ c++ --std=c++20 -MD -MF main.cpp.o.ddi.d -E -x c++ main.cpp \
--MT main.cpp.o.ddi -fmodules-ts -fdep-file=main.cpp.o.ddi \
--fdep-output=main.cpp.o -fdep-format=p1689r5 main.cpp.o.ddi.i
-				</code></pre>
+				<h1>Major compiler support</h1>
+				<p>Including dependency scanning based on <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p1689r5.html">p1689r5</a>.</p>
+				<p>
+				<table>
+					<thead>
+						<th>Vendor</th>
+						<th>Version</th>
+					</thead>
+					<tbody>
+						<tr>
+							<th>Microsoft</th>
+							<th>VS 2022</th>
+						</tr>
+						<tr>
+							<th>GNU</th>
+							<th>13.0 (Apr/May 2023)</th>
+						</tr>
+						<tr>
+							<th>LLVM/clang</th>
+							<th>16.0 (March 2023)</th>
+						</tr>
+					</tbody>
+				</table>
+				</p>
 			</section>
+
 			<section>
-				<img src="img/per_target_scanning.png">
-			</section>
-			<section>
-				<h1>C++ Modules Migration Notes</h1>
-				<p>Usage of static definitions.</p>
+				<h2>Needed Ingredients for Testing with GCC</h2>
+				<p><ul>
+					<li>Patched GCC 13</li>
+					<li>Ninja 1.10 (dynamic dependency support)</li>
+					<li>CMake 3.25</li>
+					<li>Activation of experimental APIs in CMake</li>
+				</ul></p>
+				<p>All available in <a href="https://hub.docker.com/layers/benboeckel/cxx-modules-sandbox/20221109.0/images/sha256-36cca332dc11b16ed367f3ae10789291457c2939f9bce931995d2c61090f1d41">Ben Boeckels Docker image</a>.</p>
 			</section>
 
 			<section>
@@ -255,7 +254,14 @@ $ c++ --std=c++20 -MD -MF main.cpp.o.ddi.d -E -x c++ main.cpp \
 				</p>
 			</section>
 
-
+			<section>
+				<p>Generate dependency file with gcc:</p>
+				<pre><code>
+$ c++ --std=c++20 -MD -MF main.cpp.o.ddi.d -E -x c++ main.cpp \
+-MT main.cpp.o.ddi -fmodules-ts -fdep-file=main.cpp.o.ddi \
+-fdep-output=main.cpp.o -fdep-format=p1689r5 main.cpp.o.ddi.i
+				</code></pre>
+			</section>
 		</div>
 	</div>
 
