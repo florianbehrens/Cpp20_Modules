@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:23.10
 
 RUN apt-get update -y
 RUN apt-get install -y git build-essential wget ninja-build libssl-dev
