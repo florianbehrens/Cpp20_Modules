@@ -1,7 +1,7 @@
 FROM ubuntu:latest
 
 RUN apt-get update -y
-RUN apt-get install -y git build-essential wget ninja-build openssl
+RUN apt-get install -y git build-essential wget ninja-build libssl-dev
 
 # Download GCC snapshot
 RUN wget --quiet https://kayari.org/gcc-latest/gcc-latest.deb
