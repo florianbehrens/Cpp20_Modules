@@ -1,16 +1,10 @@
-FROM ubuntu:23.10
+FROM kitware/cmake:ci-gcc_cxx_modules-x86_64-2023-09-21
 
-RUN apt-get update -y
-RUN apt-get install -y git build-essential wget ninja-build libssl-dev
-
-# Download GCC snapshot
-RUN wget --quiet https://kayari.org/gcc-latest/gcc-latest.deb
-RUN dpkg -i gcc-latest.deb
-RUN /opt/gcc-latest/bin/g++ --version
-ENV PATH=/opt/gcc-latest/bin:$PATH
-ENV LD_RUN_PATH=/opt/gcc-latest/lib64
+RUN dnf install -y openssl-devel ninja-build
 
 # Download and build CMake
+ENV CC=/opt/gcc-p1689/bin/gcc
+ENV CXX=/opt/gcc-p1689/bin/g++
 RUN git clone --depth 1 https://github.com/Kitware/CMake.git
 WORKDIR CMake
 RUN gcc --version
