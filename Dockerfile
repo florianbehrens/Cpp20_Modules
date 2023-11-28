@@ -11,7 +11,7 @@ ENV PATH=/opt/gcc-latest/bin:$PATH
 ENV LD_RUN_PATH=/opt/gcc-latest/lib64
 
 # Download and build CMake
-RUN git clone -b v3.28.0-rc5 --depth 1 https://github.com/Kitware/CMake.git
+RUN git clone --depth 1 https://github.com/Kitware/CMake.git
 WORKDIR CMake
 RUN gcc --version
 RUN ./bootstrap || cat /CMake/Bootstrap.cmk/cmake_bootstrap.log
